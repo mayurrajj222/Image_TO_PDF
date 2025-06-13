@@ -1,3 +1,8 @@
+
+import FormatFlexApp from "@/components/FormatFlexApp";
+
 export default function Home() {
-  return <></>;
+  return (
+    <FormatFlexApp />
+  );
 }
