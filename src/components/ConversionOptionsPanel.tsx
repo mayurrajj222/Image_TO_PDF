@@ -33,7 +33,7 @@ export function ConversionOptionsPanel({ fileType, onConvert, isLoading }: Conve
   const [selectedOperation, setSelectedOperation] = React.useState<ConversionOperation | null>(null);
   const [imageTargetFormat, setImageTargetFormat] = React.useState<'image/jpeg' | 'image/png' | 'image/webp'>('image/jpeg');
   const [targetImageSizeKB, setTargetImageSizeKB] = React.useState<number>(100);
-  const [targetPdfSizeKB, setTargetPdfSizeKB] = React.useState<number>(500);
+  const [targetPdfSizeKB, setTargetPdfSizeKB] = React.useState<number>(100); // Default to 100KB for PDF target
 
   React.useEffect(() => {
     setSelectedOperation(null); 
@@ -161,12 +161,17 @@ export function ConversionOptionsPanel({ fileType, onConvert, isLoading }: Conve
                       const value = parseInt(e.target.value, 10);
                       setTargetPdfSizeKB(isNaN(value) || value <= 0 ? 1 : value);
                     }}
-                    placeholder="e.g., 500"
+                    placeholder="e.g., 50 or 100"
                     min="1"
                     className="w-full"
                   />
                   <p className="text-xs text-muted-foreground pl-1">
-                    Enter approximate size. AI PDF compression can be unreliable; very small targets (e.g., &lt;100KB) often result in corrupted or unusable PDFs. The AI will try to prioritize readability, which may mean the output is larger than your target or the operation fails.
+                    Enter your desired approximate size in kilobytes (e.g., 50 for 50KB, 100 for 100KB). 
+                    <strong>Warning:</strong> AI-driven PDF compression to specific small sizes is highly experimental and can be unreliable. 
+                    Achieving targets like 50-100KB may result in corrupted, unopenable files, or the operation might fail. 
+                    The AI is instructed to prioritize creating a <strong>valid and readable PDF</strong> over strictly meeting the target size. 
+                    This means the output PDF might be larger than your target, or only slightly smaller than the original, if aggressive compression is unsafe. 
+                    If a download fails or the file is unopenable, try a larger target size or a different PDF.
                   </p>
                 </div>
               )}
