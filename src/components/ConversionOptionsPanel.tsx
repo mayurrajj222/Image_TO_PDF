@@ -7,19 +7,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input'; // Added Input
-import { FileImage, FileText, Minimize2, FileUp, Images, Wand2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { FileImage, Minimize2, FileUp, Images, Wand2, FileText } from 'lucide-react'; // Added FileText
 
 export type ConversionOperation = 
   | 'CONVERT_IMAGE' 
   | 'COMPRESS_IMAGE' 
   | 'IMAGE_TO_PDF' 
-  | 'PDF_TO_IMAGES';
+  | 'PDF_TO_IMAGES'
+  | 'COMPRESS_PDF'; // Added COMPRESS_PDF
 
 export interface ConversionConfig {
   operation: ConversionOperation;
   imageTargetFormat?: 'image/jpeg' | 'image/png' | 'image/webp';
-  targetSizeKB?: number; // Added for manual compression size
+  targetSizeKB?: number; 
 }
 
 interface ConversionOptionsPanelProps {
@@ -31,7 +32,8 @@ interface ConversionOptionsPanelProps {
 export function ConversionOptionsPanel({ fileType, onConvert, isLoading }: ConversionOptionsPanelProps) {
   const [selectedOperation, setSelectedOperation] = React.useState<ConversionOperation | null>(null);
   const [imageTargetFormat, setImageTargetFormat] = React.useState<'image/jpeg' | 'image/png' | 'image/webp'>('image/jpeg');
-  const [targetImageSizeKB, setTargetImageSizeKB] = React.useState<number>(100); // Default target size
+  const [targetImageSizeKB, setTargetImageSizeKB] = React.useState<number>(100);
+  const [targetPdfSizeKB, setTargetPdfSizeKB] = React.useState<number>(500); // Default target size for PDF
 
   React.useEffect(() => {
     setSelectedOperation(null); 
@@ -48,6 +50,8 @@ export function ConversionOptionsPanel({ fileType, onConvert, isLoading }: Conve
         currentConfig.imageTargetFormat = imageTargetFormat;
       } else if (selectedOperation === 'COMPRESS_IMAGE') {
         currentConfig.targetSizeKB = targetImageSizeKB;
+      } else if (selectedOperation === 'COMPRESS_PDF') {
+        currentConfig.targetSizeKB = targetPdfSizeKB;
       }
       onConvert(currentConfig);
     }
@@ -100,9 +104,9 @@ export function ConversionOptionsPanel({ fileType, onConvert, isLoading }: Conve
               </div>
               {selectedOperation === 'COMPRESS_IMAGE' && (
                 <div className="pl-8 my-2 space-y-2">
-                  <Label htmlFor="targetSizeKB" className="text-sm font-medium">Target Size (KB)</Label>
+                  <Label htmlFor="targetImageSizeKB" className="text-sm font-medium">Target Size (KB)</Label>
                   <Input
-                    id="targetSizeKB"
+                    id="targetImageSizeKB"
                     type="number"
                     value={targetImageSizeKB}
                     onChange={(e) => {
@@ -128,14 +132,43 @@ export function ConversionOptionsPanel({ fileType, onConvert, isLoading }: Conve
             </>
           )}
           {fileType === 'pdf' && (
-            <div className="flex items-center space-x-3 p-3 rounded-md border hover:bg-accent/5 has-[:checked]:bg-accent/10 has-[:checked]:border-primary transition-all">
-              <RadioGroupItem value="PDF_TO_IMAGES" id="op-pdf-to-images" />
-              <Label htmlFor="op-pdf-to-images" className="flex-grow cursor-pointer">
-                <div className="flex items-center">
-                  <Images className="w-5 h-5 mr-2 text-primary" /> Convert PDF to Images
+            <>
+              <div className="flex items-center space-x-3 p-3 rounded-md border hover:bg-accent/5 has-[:checked]:bg-accent/10 has-[:checked]:border-primary transition-all">
+                <RadioGroupItem value="PDF_TO_IMAGES" id="op-pdf-to-images" />
+                <Label htmlFor="op-pdf-to-images" className="flex-grow cursor-pointer">
+                  <div className="flex items-center">
+                    <Images className="w-5 h-5 mr-2 text-primary" /> Convert PDF to Images
+                  </div>
+                </Label>
+              </div>
+
+              <div className="flex items-center space-x-3 p-3 rounded-md border hover:bg-accent/5 has-[:checked]:bg-accent/10 has-[:checked]:border-primary transition-all">
+                <RadioGroupItem value="COMPRESS_PDF" id="op-compress-pdf" />
+                <Label htmlFor="op-compress-pdf" className="flex-grow cursor-pointer">
+                  <div className="flex items-center">
+                     <FileText className="w-5 h-5 mr-2 text-primary" /> Compress PDF
+                  </div>
+                </Label>
+              </div>
+              {selectedOperation === 'COMPRESS_PDF' && (
+                <div className="pl-8 my-2 space-y-2">
+                  <Label htmlFor="targetPdfSizeKB" className="text-sm font-medium">Target Size (KB)</Label>
+                  <Input
+                    id="targetPdfSizeKB"
+                    type="number"
+                    value={targetPdfSizeKB}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value, 10);
+                      setTargetPdfSizeKB(isNaN(value) || value <= 0 ? 1 : value);
+                    }}
+                    placeholder="e.g., 500"
+                    min="1"
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground pl-1">Enter desired approximate size in kilobytes. AI compression for PDFs may vary.</p>
                 </div>
-              </Label>
-            </div>
+              )}
+            </>
           )}
         </RadioGroup>
         
@@ -151,4 +184,3 @@ export function ConversionOptionsPanel({ fileType, onConvert, isLoading }: Conve
     </Card>
   );
 }
-

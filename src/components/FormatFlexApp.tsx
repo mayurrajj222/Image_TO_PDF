@@ -3,11 +3,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { FileDropzone } from './FileDropzone';
-import { ConversionOptionsPanel, type ConversionConfig, type ConversionOperation } from './ConversionOptionsPanel';
+import { ConversionOptionsPanel, type ConversionConfig } from './ConversionOptionsPanel'; // Removed ConversionOperation type import as it's not directly used here
 import { ResultsDisplay } from './ResultsDisplay';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useToast } from "@/hooks/use-toast";
-import { compressImageAction } from '@/app/actions';
+import { compressImageAction, compressPdfAction } from '@/app/actions'; // Added compressPdfAction
 import { convertImageFormat, imageToPdf, pdfToImages, type ConversionResult, type ImageMimeType } from '@/lib/client-converters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
@@ -72,6 +72,8 @@ export default function FormatFlexApp() {
 
     try {
       let conversionResults: ConversionResult[] = [];
+      const fileDataUri = await readFileAsDataURL(inputFile);
+
       switch (config.operation) {
         case 'CONVERT_IMAGE':
           if (config.imageTargetFormat) {
@@ -82,17 +84,16 @@ export default function FormatFlexApp() {
           }
           break;
         case 'COMPRESS_IMAGE':
-          const imageDataUri = await readFileAsDataURL(inputFile);
           if (typeof config.targetSizeKB !== 'number' || config.targetSizeKB <= 0) {
             throw new Error("Target size for image compression must be a positive number.");
           }
-          const compressedResult = await compressImageAction(imageDataUri, config.targetSizeKB);
-          if (compressedResult.error) throw new Error(compressedResult.error);
-          if (compressedResult.optimizedPhotoDataUri) {
+          const compressedImgResult = await compressImageAction(fileDataUri, config.targetSizeKB);
+          if (compressedImgResult.error) throw new Error(compressedImgResult.error);
+          if (compressedImgResult.optimizedPhotoDataUri) {
             const ext = inputFile.name.substring(inputFile.name.lastIndexOf('.') + 1) || 'jpg';
             conversionResults.push({
               name: `compressed_${inputFile.name.substring(0, inputFile.name.lastIndexOf('.')) || inputFile.name}.${ext}`,
-              dataUrl: compressedResult.optimizedPhotoDataUri,
+              dataUrl: compressedImgResult.optimizedPhotoDataUri,
               type: inputFile.type, 
             });
           }
@@ -105,14 +106,36 @@ export default function FormatFlexApp() {
           const images = await pdfToImages(inputFile, 'image/png');
           conversionResults.push(...images);
           break;
+        case 'COMPRESS_PDF':
+          if (typeof config.targetSizeKB !== 'number' || config.targetSizeKB <= 0) {
+            throw new Error("Target size for PDF compression must be a positive number.");
+          }
+          const compressedPdfResult = await compressPdfAction(fileDataUri, config.targetSizeKB);
+          if (compressedPdfResult.error) throw new Error(compressedPdfResult.error);
+          if (compressedPdfResult.optimizedPdfDataUri) {
+            conversionResults.push({
+              name: `compressed_${inputFile.name}`,
+              dataUrl: compressedPdfResult.optimizedPdfDataUri,
+              type: 'application/pdf',
+            });
+          }
+          break;
         default:
-          throw new Error('Invalid conversion operation.');
+          // Ensure exhaustive check with a helper function or by casting 'never'
+          const exhaustiveCheck: never = config.operation;
+          throw new Error(`Invalid conversion operation: ${exhaustiveCheck}`);
       }
       setResults(conversionResults);
       if (conversionResults.length > 0) {
         toast({
           title: "Conversion Successful!",
           description: `${conversionResults.length} file(s) processed.`,
+        });
+      } else if (! (config.operation === 'COMPRESS_IMAGE' || config.operation === 'COMPRESS_PDF')) { // Avoid success message if compression yields no result but no error
+         toast({
+          variant: "default",
+          title: "Processing Complete",
+          description: "The operation finished, but no output files were generated. This may be expected for some operations or if the AI could not perform the task.",
         });
       }
     } catch (error: any) {
@@ -179,4 +202,3 @@ export default function FormatFlexApp() {
     </div>
   );
 }
-
