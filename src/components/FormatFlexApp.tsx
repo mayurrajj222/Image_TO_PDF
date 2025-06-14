@@ -31,7 +31,7 @@ export default function FormatFlexApp() {
         reader.readAsDataURL(inputFile);
       } else if (inputFile.type === 'application/pdf') {
         setFileType('pdf');
-        setFilePreview(null); // No preview for PDF generally, or could show icon
+        setFilePreview(null); 
       } else {
         toast({
           variant: "destructive",
@@ -40,7 +40,7 @@ export default function FormatFlexApp() {
         });
         handleClearFile();
       }
-      setResults([]); // Clear previous results
+      setResults([]); 
     } else {
       setFileType(null);
       setFilePreview(null);
@@ -83,14 +83,17 @@ export default function FormatFlexApp() {
           break;
         case 'COMPRESS_IMAGE':
           const imageDataUri = await readFileAsDataURL(inputFile);
-          const compressedResult = await compressImageAction(imageDataUri);
+          if (typeof config.targetSizeKB !== 'number' || config.targetSizeKB <= 0) {
+            throw new Error("Target size for image compression must be a positive number.");
+          }
+          const compressedResult = await compressImageAction(imageDataUri, config.targetSizeKB);
           if (compressedResult.error) throw new Error(compressedResult.error);
           if (compressedResult.optimizedPhotoDataUri) {
             const ext = inputFile.name.substring(inputFile.name.lastIndexOf('.') + 1) || 'jpg';
             conversionResults.push({
               name: `compressed_${inputFile.name.substring(0, inputFile.name.lastIndexOf('.')) || inputFile.name}.${ext}`,
               dataUrl: compressedResult.optimizedPhotoDataUri,
-              type: inputFile.type, // Assuming AI keeps original type or similar
+              type: inputFile.type, 
             });
           }
           break;
@@ -99,8 +102,6 @@ export default function FormatFlexApp() {
           conversionResults.push(pdfResult);
           break;
         case 'PDF_TO_IMAGES':
-          // For PDF to Images, users might want to select output format (PNG/JPEG)
-          // For simplicity, default to PNG. This could be an option in ConversionOptionsPanel.
           const images = await pdfToImages(inputFile, 'image/png');
           conversionResults.push(...images);
           break;

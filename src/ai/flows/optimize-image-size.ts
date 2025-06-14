@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -17,6 +18,10 @@ const OptimizeImageSizeInputSchema = z.object({
     .describe(
       "A photo to be compressed, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
+  targetSizeKB: z
+    .number()
+    .positive()
+    .describe('The target image size in kilobytes, e.g., 100 for 100KB.'),
 });
 export type OptimizeImageSizeInput = z.infer<typeof OptimizeImageSizeInputSchema>;
 
@@ -35,7 +40,7 @@ const prompt = ai.definePrompt({
   name: 'optimizeImageSizePrompt',
   input: {schema: OptimizeImageSizeInputSchema},
   output: {schema: OptimizeImageSizeOutputSchema},
-  prompt: `You are an expert image optimization tool.  You will optimize the image to be approximately 100KB while maintaining acceptable image quality.  Return the optimized image as a data URI.
+  prompt: `You are an expert image optimization tool. You will optimize the image to be approximately {{{targetSizeKB}}}KB while maintaining acceptable image quality. Return the optimized image as a data URI.
 
 Image: {{media url=photoDataUri}}`,
   config: {
@@ -68,14 +73,10 @@ const optimizeImageSizeFlow = ai.defineFlow(
   },
   async input => {
     const {media} = await ai.generate({
-      // IMPORTANT: ONLY the googleai/gemini-2.0-flash-exp model is able to generate images. You MUST use exactly this model to generate images.
       model: 'googleai/gemini-2.0-flash-exp',
-
-      // simple prompt
-      prompt: [{media: {url: input.photoDataUri}}, {text: 'Optimize this image to be approximately 100KB while maintaining acceptable image quality.'}],
-
+      prompt: [{media: {url: input.photoDataUri}}, {text: `Optimize this image to be approximately ${input.targetSizeKB}KB while maintaining acceptable image quality.`}],
       config: {
-        responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE, IMAGE only won't work
+        responseModalities: ['TEXT', 'IMAGE'], 
       },
     });
 

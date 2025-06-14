@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileImage, FileText, Minimize2, FileUp, Images, Wand2 } from 'lucide-react'; // Corrected: ImageDown changed to Images
+import { Input } from '@/components/ui/input'; // Added Input
+import { FileImage, FileText, Minimize2, FileUp, Images, Wand2 } from 'lucide-react';
 
 export type ConversionOperation = 
   | 'CONVERT_IMAGE' 
@@ -18,6 +19,7 @@ export type ConversionOperation =
 export interface ConversionConfig {
   operation: ConversionOperation;
   imageTargetFormat?: 'image/jpeg' | 'image/png' | 'image/webp';
+  targetSizeKB?: number; // Added for manual compression size
 }
 
 interface ConversionOptionsPanelProps {
@@ -29,9 +31,10 @@ interface ConversionOptionsPanelProps {
 export function ConversionOptionsPanel({ fileType, onConvert, isLoading }: ConversionOptionsPanelProps) {
   const [selectedOperation, setSelectedOperation] = React.useState<ConversionOperation | null>(null);
   const [imageTargetFormat, setImageTargetFormat] = React.useState<'image/jpeg' | 'image/png' | 'image/webp'>('image/jpeg');
+  const [targetImageSizeKB, setTargetImageSizeKB] = React.useState<number>(100); // Default target size
 
   React.useEffect(() => {
-    setSelectedOperation(null); // Reset operation when fileType changes
+    setSelectedOperation(null); 
   }, [fileType]);
 
   const handleOperationChange = (value: string) => {
@@ -40,7 +43,13 @@ export function ConversionOptionsPanel({ fileType, onConvert, isLoading }: Conve
   
   const handleConvertClick = () => {
     if (selectedOperation) {
-      onConvert({ operation: selectedOperation, imageTargetFormat });
+      const currentConfig: ConversionConfig = { operation: selectedOperation };
+      if (selectedOperation === 'CONVERT_IMAGE') {
+        currentConfig.imageTargetFormat = imageTargetFormat;
+      } else if (selectedOperation === 'COMPRESS_IMAGE') {
+        currentConfig.targetSizeKB = targetImageSizeKB;
+      }
+      onConvert(currentConfig);
     }
   };
 
@@ -85,10 +94,28 @@ export function ConversionOptionsPanel({ fileType, onConvert, isLoading }: Conve
                 <RadioGroupItem value="COMPRESS_IMAGE" id="op-compress-image" />
                 <Label htmlFor="op-compress-image" className="flex-grow cursor-pointer">
                   <div className="flex items-center">
-                     <Minimize2 className="w-5 h-5 mr-2 text-primary" /> Compress Image (to ~100KB)
+                     <Minimize2 className="w-5 h-5 mr-2 text-primary" /> Compress Image
                   </div>
                 </Label>
               </div>
+              {selectedOperation === 'COMPRESS_IMAGE' && (
+                <div className="pl-8 my-2 space-y-2">
+                  <Label htmlFor="targetSizeKB" className="text-sm font-medium">Target Size (KB)</Label>
+                  <Input
+                    id="targetSizeKB"
+                    type="number"
+                    value={targetImageSizeKB}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value, 10);
+                      setTargetImageSizeKB(isNaN(value) || value <= 0 ? 1 : value);
+                    }}
+                    placeholder="e.g., 100"
+                    min="1"
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground pl-1">Enter desired approximate size in kilobytes.</p>
+                </div>
+              )}
               
               <div className="flex items-center space-x-3 p-3 rounded-md border hover:bg-accent/5 has-[:checked]:bg-accent/10 has-[:checked]:border-primary transition-all">
                 <RadioGroupItem value="IMAGE_TO_PDF" id="op-image-to-pdf" />
@@ -124,3 +151,4 @@ export function ConversionOptionsPanel({ fileType, onConvert, isLoading }: Conve
     </Card>
   );
 }
+
