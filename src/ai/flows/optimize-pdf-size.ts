@@ -42,13 +42,17 @@ const optimizePdfSizePromptObj = ai.definePrompt({
   output: {schema: OptimizePdfSizeOutputSchema},
   prompt: `You are an expert PDF optimization tool. Your task is to reduce the file size of the provided PDF (given as a data URI) to approximately {{{targetSizeKB}}}KB.
 
-CRITICAL: The primary goal is to produce a VALID and READABLE PDF. If achieving the target size of {{{targetSizeKB}}}KB compromises document integrity or readability, prioritize creating a usable PDF that is smaller than the original but potentially larger than the target. Extremely small target sizes (e.g., below 50KB for typical documents) may not be achievable while maintaining a valid file.
+CRITICAL INSTRUCTIONS:
+1.  Your ABSOLUTE PRIMARY GOAL is to produce a VALID and READABLE PDF.
+2.  If achieving the target size of {{{targetSizeKB}}}KB would compromise document integrity or readability, you MUST prioritize creating a usable PDF. This means the output PDF should be smaller than the original BUT MUST BE VALID AND OPENABLE, even if it ends up being larger than the {{{targetSizeKB}}}KB target.
+3.  DO NOT generate a data URI if its Base64 content represents a corrupted, incomplete, or unopenable PDF. It is far better to be less compressive (or even return a copy of the original if no safe compression is possible) than to produce a broken file.
+4.  Be aware that extremely small target sizes (e.g., below 100KB for many typical documents) are often impossible to achieve while maintaining a valid PDF.
 
-Apply techniques such as image re-compression (if any images are present and identifiable), font subsetting, or removal of unnecessary metadata or objects.
+Apply techniques such as image re-compression (if any images are present and identifiable within the PDF structure you can understand), font subsetting, or removal of unnecessary metadata or objects, but only if these operations do not break the PDF.
 
 Return ONLY the optimized PDF as a data URI string in the 'optimizedPdfDataUri' field of the JSON output.
-Do not include any other text, explanations, or markdown.
-The output 'optimizedPdfDataUri' must be a valid data URI string: 'data:application/pdf;base64,<encoded_data>'.
+The output 'optimizedPdfDataUri' must be a valid data URI string in the format: 'data:application/pdf;base64,<encoded_data>'. The <encoded_data> part MUST be valid Base64 encoding of a complete and openable PDF document.
+Do not include any other text, explanations, or markdown in your response.
 
 Original PDF Data URI: {{{pdfDataUri}}}
 Target Size: {{{targetSizeKB}}}KB`,
@@ -75,6 +79,11 @@ const optimizePdfSizeFlow = ai.defineFlow(
     }
     if (!output.optimizedPdfDataUri.startsWith('data:application/pdf;base64,')) {
       throw new Error('AI returned an invalid data URI format for the PDF. It must start with "data:application/pdf;base64,".');
+    }
+    // Basic check for empty or trivially small base64 content
+    const base64Content = output.optimizedPdfDataUri.substring('data:application/pdf;base64,'.length);
+    if (base64Content.length < 100) { // Arbitrary small length, real PDFs are usually larger
+        throw new Error('AI returned a PDF data URI that appears to be empty or too small to be a valid PDF.');
     }
     return output;
   }

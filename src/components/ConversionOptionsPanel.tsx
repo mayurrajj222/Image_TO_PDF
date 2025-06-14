@@ -166,7 +166,7 @@ export function ConversionOptionsPanel({ fileType, onConvert, isLoading }: Conve
                     className="w-full"
                   />
                   <p className="text-xs text-muted-foreground pl-1">
-                    Enter desired size. Extremely small targets (e.g., &lt;50KB) may result in an unusable PDF or a file larger than the target to maintain readability.
+                    Enter approximate size. AI PDF compression can be unreliable; very small targets (e.g., &lt;100KB) often result in corrupted or unusable PDFs. The AI will try to prioritize readability, which may mean the output is larger than your target or the operation fails.
                   </p>
                 </div>
               )}
