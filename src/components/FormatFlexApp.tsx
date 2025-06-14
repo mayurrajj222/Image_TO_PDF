@@ -151,10 +151,10 @@ export default function FormatFlexApp() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 bg-background">
-      <header className="mb-8 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold text-primary font-headline">FormatFlex</h1>
-        <p className="text-lg text-muted-foreground mt-2">Your flexible friend for file conversions and compression.</p>
+    <div className="min-h-screen flex flex-col items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8 bg-background">
+      <header className="mb-6 sm:mb-8 text-center">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary font-headline">FormatFlex</h1>
+        <p className="text-md sm:text-lg text-muted-foreground mt-2">Your flexible friend for file conversions and compression.</p>
       </header>
 
       <main className="w-full flex flex-col items-center">
@@ -196,7 +196,7 @@ export default function FormatFlexApp() {
           </Card>
         )}
       </main>
-      <footer className="mt-12 text-center text-sm text-muted-foreground">
+      <footer className="mt-10 sm:mt-12 text-center text-sm text-muted-foreground">
         <p>&copy; {new Date().getFullYear()} FormatFlex. All rights reserved.</p>
       </footer>
     </div>
