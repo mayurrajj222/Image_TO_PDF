@@ -42,7 +42,9 @@ const optimizePdfSizePromptObj = ai.definePrompt({
   output: {schema: OptimizePdfSizeOutputSchema},
   prompt: `You are an expert PDF optimization tool. Your task is to reduce the file size of the provided PDF (given as a data URI) to approximately {{{targetSizeKB}}}KB.
 
-Prioritize maintaining document readability and preserving essential content. You may need to apply techniques such as image re-compression (if any images are present and identifiable), font subsetting, or removal of unnecessary metadata or objects.
+CRITICAL: The primary goal is to produce a VALID and READABLE PDF. If achieving the target size of {{{targetSizeKB}}}KB compromises document integrity or readability, prioritize creating a usable PDF that is smaller than the original but potentially larger than the target. Extremely small target sizes (e.g., below 50KB for typical documents) may not be achievable while maintaining a valid file.
+
+Apply techniques such as image re-compression (if any images are present and identifiable), font subsetting, or removal of unnecessary metadata or objects.
 
 Return ONLY the optimized PDF as a data URI string in the 'optimizedPdfDataUri' field of the JSON output.
 Do not include any other text, explanations, or markdown.
@@ -77,3 +79,4 @@ const optimizePdfSizeFlow = ai.defineFlow(
     return output;
   }
 );
+

@@ -8,14 +8,14 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { FileImage, Minimize2, FileUp, Images, Wand2, FileText } from 'lucide-react'; // Added FileText
+import { FileImage, Minimize2, FileUp, Images, Wand2, FileText } from 'lucide-react';
 
 export type ConversionOperation = 
   | 'CONVERT_IMAGE' 
   | 'COMPRESS_IMAGE' 
   | 'IMAGE_TO_PDF' 
   | 'PDF_TO_IMAGES'
-  | 'COMPRESS_PDF'; // Added COMPRESS_PDF
+  | 'COMPRESS_PDF';
 
 export interface ConversionConfig {
   operation: ConversionOperation;
@@ -33,7 +33,7 @@ export function ConversionOptionsPanel({ fileType, onConvert, isLoading }: Conve
   const [selectedOperation, setSelectedOperation] = React.useState<ConversionOperation | null>(null);
   const [imageTargetFormat, setImageTargetFormat] = React.useState<'image/jpeg' | 'image/png' | 'image/webp'>('image/jpeg');
   const [targetImageSizeKB, setTargetImageSizeKB] = React.useState<number>(100);
-  const [targetPdfSizeKB, setTargetPdfSizeKB] = React.useState<number>(500); // Default target size for PDF
+  const [targetPdfSizeKB, setTargetPdfSizeKB] = React.useState<number>(500);
 
   React.useEffect(() => {
     setSelectedOperation(null); 
@@ -165,7 +165,9 @@ export function ConversionOptionsPanel({ fileType, onConvert, isLoading }: Conve
                     min="1"
                     className="w-full"
                   />
-                  <p className="text-xs text-muted-foreground pl-1">Enter desired approximate size in kilobytes. AI compression for PDFs may vary.</p>
+                  <p className="text-xs text-muted-foreground pl-1">
+                    Enter desired size. Extremely small targets (e.g., &lt;50KB) may result in an unusable PDF or a file larger than the target to maintain readability.
+                  </p>
                 </div>
               )}
             </>
@@ -184,3 +186,4 @@ export function ConversionOptionsPanel({ fileType, onConvert, isLoading }: Conve
     </Card>
   );
 }
+
